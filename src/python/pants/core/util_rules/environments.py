@@ -145,6 +145,11 @@ class CompatiblePlatformsField(StringSequenceField):
     )
 
 
+class InappropriatePluginField(StringField):
+    alias = "inappropriate_plugin_field"
+    default = "inappropriate"
+
+
 class LocalEnvironmentTarget(Target):
     alias = "_local_environment"
     core_fields = (*_COMMON_ENV_FIELDS, CompatiblePlatformsField)
@@ -413,4 +418,8 @@ def extract_process_config_from_environment(tgt: EnvironmentTarget) -> ProcessCo
 
 
 def rules():
-    return (*collect_rules(), QueryRule(ChosenLocalEnvironmentName, []))
+    return (
+        *collect_rules(),
+        LocalEnvironmentTarget.register_plugin_field(InappropriatePluginField),
+        QueryRule(ChosenLocalEnvironmentName, []),
+    )
