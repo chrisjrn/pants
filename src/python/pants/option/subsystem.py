@@ -7,7 +7,7 @@ import functools
 import inspect
 import re
 from abc import ABCMeta
-from typing import Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from pants import ox
 from pants.engine.internals.selectors import AwaitableConstraints, Get
@@ -15,6 +15,13 @@ from pants.option.errors import OptionsError
 from pants.option.option_types import collect_options_info
 from pants.option.option_value_container import OptionValueContainer
 from pants.option.scope import Scope, ScopedOptions, ScopeInfo, normalize_scope
+
+if TYPE_CHECKING:
+    from pants.core.util_rules.environments import EnvironmentTarget
+
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Subsystem(metaclass=ABCMeta):
@@ -46,7 +53,15 @@ class Subsystem(metaclass=ABCMeta):
 
         TODO: This indirection avoids a cycle between this module and the `rules` module.
         """
+        # Imported here to avoid import cycle (sigh)
+        from pants.core.util_rules.environments import EnvironmentTarget
+        from pants.core.util_rules.environments import EnvironmentsSubsystem
+
+        is_environments_subsystem = cls is EnvironmentsSubsystem
+
         partial_construct_subsystem = functools.partial(_construct_subsytem, cls)
+        if is_environments_subsystem:
+            partial_construct_subsystem = functools.partial(partial_construct_subsystem, cls, None)
 
         # NB: We must populate several dunder methods on the partial function because partial
         # functions do not have these defined by default and the engine uses these values to
@@ -66,7 +81,7 @@ class Subsystem(metaclass=ABCMeta):
 
         return dict(
             output_type=cls,
-            input_selectors=(),
+            input_selectors=(EnvironmentTarget,) if not is_environments_subsystem else (),
             func=partial_construct_subsystem,
             input_gets=(
                 AwaitableConstraints(
@@ -75,7 +90,7 @@ class Subsystem(metaclass=ABCMeta):
             ),
             canonical_name=name,
         )
-
+        
     @classmethod
     def is_valid_scope_name(cls, s: str) -> bool:
         return s == "" or cls._scope_name_re.match(s) is not None
@@ -130,6 +145,7 @@ class Subsystem(metaclass=ABCMeta):
 _SubsystemT = TypeVar("_SubsystemT", bound=Subsystem)
 
 
-async def _construct_subsytem(subsystem_typ: type[_SubsystemT]) -> _SubsystemT:
+async def _construct_subsytem(subsystem_typ: type[_SubsystemT], env_tgt: EnvironmentTarget | None) -> _SubsystemT:
+    logger.warning(f"{env_tgt=}")
     scoped_options = await Get(ScopedOptions, Scope(str(subsystem_typ.options_scope)))
     return subsystem_typ(scoped_options.options)
