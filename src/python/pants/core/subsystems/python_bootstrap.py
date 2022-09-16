@@ -18,7 +18,6 @@ from pants.core.util_rules.environments import (
     EnvironmentsSubsystem,
     EnvironmentTarget,
     add_option_fields_for,
-    get_option,
 )
 from pants.engine.env_vars import EnvironmentVars
 from pants.engine.rules import Get, collect_rules, rule
@@ -254,9 +253,8 @@ async def python_bootstrap(
     python_bootstrap_subsystem: PythonBootstrapSubsystem, env_tgt: EnvironmentTarget
 ) -> PythonBootstrap:
 
-    # TODO: use subsystems directly again once we do overrides at subsystem contruct time.
-    interpreter_search_paths = get_option("search_path", python_bootstrap_subsystem, env_tgt)
-    interpreter_names = get_option("names", python_bootstrap_subsystem, env_tgt)
+    interpreter_search_paths = env_tgt.wrap(python_bootstrap_subsystem).search_path
+    interpreter_names = env_tgt.wrap(python_bootstrap_subsystem).names
 
     has_standard_path_token, has_local_path_token = PythonBootstrap.contains_asdf_path_tokens(
         interpreter_search_paths

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass
-from typing import Any, ClassVar, Iterable, cast
+from typing import Any, ClassVar, Iterable, TypeVar, cast
 
 from pants.build_graph.address import Address, AddressInput
 from pants.engine.engine_aware import EngineAwareParameter
@@ -35,6 +35,8 @@ from pants.util.enums import match
 from pants.util.frozendict import FrozenDict
 from pants.util.memo import memoized
 from pants.util.strutil import softwrap
+
+Subsystem_T = TypeVar("Subsystem_T", bound=Subsystem)
 
 
 class EnvironmentsSubsystem(Subsystem):
@@ -219,6 +221,9 @@ class ChosenLocalEnvironmentName:
 @dataclass(frozen=True)
 class EnvironmentTarget:
     val: Target | None
+
+    def wrap(self, subsystem: Subsystem_T) -> Subsystem_T:
+        return _SubsystemProxy(subsystem, self)  # type: ignore
 
 
 @dataclass(frozen=True)
@@ -542,3 +547,41 @@ def rules():
         UnionRule(FieldDefaultFactoryRequest, DockerPlatformFieldDefaultFactoryRequest),
         QueryRule(ChosenLocalEnvironmentName, []),
     )
+
+
+class _SubsystemProxy:
+    """Wraps a subsystem for static type checking purposes."""
+
+    _env_tgt: EnvironmentTarget
+    _subsystem: Subsystem
+
+    def __init__(self, subsystem: Subsystem, env_tgt: EnvironmentTarget):
+        self._subsystem = subsystem
+        self._env_tgt = env_tgt
+
+    def __getattribute__(self, __name: str) -> Any:
+        if __name == "_env_tgt" or __name == "_subsystem":
+            return super().__getattribute__(__name)
+
+        env_tgt = self._env_tgt
+        subsystem = self._subsystem
+
+        if env_tgt.val is None:
+            return getattr(subsystem, __name)
+
+        options = _options(env_tgt)
+
+        maybe = options.get((type(subsystem), __name))
+        if maybe is None or maybe.value is None:
+            return getattr(subsystem, __name)
+        else:
+            return maybe.value
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if __name == "_env_tgt" or __name == "_subsystem":
+            super().__setattr__(__name, __value)
+            return
+        raise ValueError(
+            f"{self} is a proxy for {self._subsystem}. "
+            f"You cannot set attributes on it. (Tried to set attribute `{__name}`"
+        )
