@@ -1,0 +1,55 @@
+{
+  "workspaces": {
+    "packages": [
+      "aou-reports",
+      "common/frontend/lib",
+      "common/frontend/components",
+      "common/frontend/eslint-config-color",
+      "common/frontend/i18n",
+      "email-server",
+      "gp/frontend",
+      "home/ci",
+      "home/frontend",
+      "pdf-generator/backend",
+      "prototype-environment/frontend",
+      "rhp/frontend"
+    ]
+  },
+  "dependencies": {
+    "@emotion/react": "11.9.3",
+    "@emotion/styled": "11.9.3",
+    "@js-temporal/polyfill": "0.4.2",
+    "@material-ui/core": "4.12.3",
+    "@material-ui/icons": "4.11.2",
+    "@material-ui/lab": "4.0.0-alpha.50",
+    "@mui/icons-material": "5.8.4",
+    "@mui/lab": "5.0.0-alpha.92",
+    "@mui/material": "5.9.2",
+    "@mui/styles": "5.9.2",
+    "@mui/x-date-pickers": "5.0.0-beta.2",
+    "constate": "3.3.0",
+    "date-fns": "2.27.0",
+    "formik": "2.1.4",
+    "html-tags": "3.2.0",
+    "markdown-to-jsx": "7.0.1",
+    "notistack": "1.0.10",
+    "pluralize": "8.0.0",
+    "react-helmet-async": "1.0.7",
+    "react-intl": "5.20.7",
+    "react-query": "3.26.0",
+    "react-router-dom": "5.3.0"
+  },
+  "devDependencies": {
+    "@types/jest-axe": "3.5.4",
+    "jest": "26.6.0",
+    "jest-axe": "6.0.0",
+    "npm-run-all": "4.1.5",
+    "webpack": "4.44.2"
+  },
+  "resolutions": {
+    "babel-jest": "26.6.0",
+    "babel-loader": "8.1.0",
+    "webpack-virtual-modules": "0.4.3"
+  },
+  "packageManager": "yarn@3.0.2"
+}

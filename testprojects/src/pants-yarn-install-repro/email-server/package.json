@@ -1,0 +1,6 @@
+{
+  "name": "email-server",
+  "dependencies": {
+    "maildev": "2.0.5"
+  }
+}

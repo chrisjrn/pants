@@ -1,0 +1,53 @@
+files(
+    name="package-config",
+    sources=["package.json", "yarn.lock", ".yarnrc.yml"],
+    dependencies=["./yarn/releases"],
+)
+
+experimental_shell_command(
+    name="yarn-install",
+    command="yarn install --immutable",
+    tools=[
+        "yarn",
+        "node",
+        # NOTE: These are needed to run `yarn` via `asdf`.
+        # Shouldn't be needed if you install `yarn` some other way.
+        "bash",
+        "basename",
+        "dirname",
+        "sed",
+        "uniq",
+        "cut",
+        "awk",
+        "grep",
+        "head",
+        "tr",
+        "readlink",
+        "uname",
+    ],
+    # Needed if running `yarn` via `asdf`.
+    extra_env_vars=["ASDF_DIR", "HOME"],
+    dependencies=[
+        ":package-config",
+        "./common/frontend/lib:package-json",
+        "./common/frontend/components:package-json",
+        "./common/frontend/i18n:package-json",
+        "./common/frontend/eslint-config-color:package-json",
+        "./aou-reports:package-json",
+        "./rhp/frontend:package-json",
+        "./gp/frontend:package-json",
+        "./home/frontend:package-json",
+        "./home/ci:package-json",
+        "./email-server:package-json",
+        "./pdf-generator/backend:package-json",
+        "./prototype-environment/frontend:package-json",
+    ],
+    outputs=["node_modules/"],
+    timeout=300,
+)
+
+experimental_run_shell_command(
+    name="run-yarn-install",
+    command="ls -l {chroot}",
+    dependencies=[":yarn-install"],
+)

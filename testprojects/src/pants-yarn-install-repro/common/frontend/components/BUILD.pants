@@ -1,0 +1,1 @@
+file(name="package-json", source="package.json")
