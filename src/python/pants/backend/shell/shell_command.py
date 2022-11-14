@@ -19,6 +19,7 @@ from pants.backend.shell.target_types import (
     ShellCommandOutputsField,
     ShellCommandRunWorkdirField,
     ShellCommandSourcesField,
+    ShellCommandTarget,
     ShellCommandTimeoutField,
     ShellCommandToolsField,
 )
@@ -58,6 +59,7 @@ from pants.engine.target import (
 )
 from pants.engine.unions import UnionRule
 from pants.util.logging import LogLevel
+from pants.util.ordered_set import FrozenOrderedSet
 
 logger = logging.getLogger(__name__)
 
@@ -171,11 +173,24 @@ async def prepare_shell_command_process(
         TransitiveTargetsRequest([shell_command.address]),
     )
 
-    sources, pkgs_per_target = await MultiGet(
+    immutable_deps = FrozenOrderedSet(
+        tgt for tgt in transitive_targets.dependencies if isinstance(tgt, ShellCommandTarget)
+    )
+    mutable_deps = [tgt for tgt in transitive_targets.dependencies if tgt not in immutable_deps]
+
+    immutable_sources, sources, pkgs_per_target = await MultiGet(
         Get(
             SourceFiles,
             SourceFilesRequest(
-                sources_fields=[tgt.get(SourcesField) for tgt in transitive_targets.dependencies],
+                sources_fields=[tgt.get(SourcesField) for tgt in immutable_deps],
+                for_sources_types=(SourcesField, FileSourceField),
+                enable_codegen=True,
+            ),
+        ),
+        Get(
+            SourceFiles,
+            SourceFilesRequest(
+                sources_fields=[tgt.get(SourcesField) for tgt in mutable_deps],
                 for_sources_types=(SourcesField, FileSourceField),
                 enable_codegen=True,
             ),
@@ -230,6 +245,7 @@ async def prepare_shell_command_process(
         output_files=output_files,
         timeout_seconds=timeout,
         working_directory=working_directory,
+        immutable_input_digests={"flemb": immutable_sources.snapshot.digest},
     )
 
 
@@ -244,6 +260,7 @@ async def run_shell_command_request(shell_command: RunShellCommand) -> RunReques
         digest=process.input_digest,
         args=process.argv,
         extra_env=process.env,
+        immutable_input_digests=process.immutable_input_digests,
     )
 
 
