@@ -13,6 +13,7 @@ from textwrap import dedent  # noqa: PNT20
 from pants.backend.shell.builtin import BASH_BUILTIN_COMMANDS
 from pants.backend.shell.shell_setup import ShellSetup
 from pants.backend.shell.target_types import (
+    GenericSideEffectField,
     ShellCommandCommandField,
     ShellCommandExtraEnvVarsField,
     ShellCommandLogOutputField,
@@ -62,8 +63,13 @@ from pants.util.logging import LogLevel
 logger = logging.getLogger(__name__)
 
 
-class GenerateFilesFromShellCommandRequest(GenerateSourcesRequest):
+class GenerateSideEffectFromShellCommandRequest(GenerateSourcesRequest):
     input = ShellCommandSourcesField
+    output = GenericSideEffectField
+
+
+class GenerateFilesFromShellCommandRequest(GenerateSourcesRequest):
+    input = GenericSideEffectField
     output = FileSourceField
 
 
@@ -76,12 +82,13 @@ class RunShellCommand(RunFieldSet):
     required_fields = (
         ShellCommandCommandField,
         ShellCommandRunWorkdirField,
+        
     )
 
 
 @rule(desc="Running shell command", level=LogLevel.DEBUG)
 async def run_shell_command(
-    request: GenerateFilesFromShellCommandRequest,
+    request: GenerateSideEffectFromShellCommandRequest,
 ) -> GeneratedSources:
     shell_command = request.protocol_target
     result = await Get(ProcessResult, ShellCommandProcessRequest(shell_command))
@@ -95,6 +102,12 @@ async def run_shell_command(
     working_directory = shell_command.address.spec_path
     output = await Get(Snapshot, AddPrefix(result.output_digest, working_directory))
     return GeneratedSources(output)
+
+
+@rule
+async def boop(request: GenerateFilesFromShellCommandRequest) -> GeneratedSources:
+    raise Exception()
+    return GeneratedSources(await Get(Snapshot, Digest, request.protocol_sources.digest))
 
 
 def _shell_tool_safe_env_name(tool_name: str) -> str:
@@ -260,5 +273,6 @@ def rules():
     return [
         *collect_rules(),
         UnionRule(GenerateSourcesRequest, GenerateFilesFromShellCommandRequest),
+        UnionRule(GenerateSourcesRequest, GenerateSideEffectFromShellCommandRequest),
         UnionRule(RunFieldSet, RunShellCommand),
     ]

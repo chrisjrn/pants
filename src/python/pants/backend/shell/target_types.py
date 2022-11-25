@@ -280,6 +280,12 @@ class ShellCommandSourcesField(MultipleSourcesField):
     expected_num_files = 0
 
 
+class GenericSideEffectField(MultipleSourcesField):
+    # We solely register this field for codegen to work.
+    alias = "_generic_side_effect"
+    uses_source_roots = False
+
+
 class ShellCommandTimeoutField(IntField):
     alias = "timeout"
     default = 30
