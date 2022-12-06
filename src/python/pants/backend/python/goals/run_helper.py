@@ -98,7 +98,11 @@ async def _create_python_source_run_request(
         pex_request, pex_path=(*pex_request.pex_path, local_dists.pex)
     )
 
-    complete_pex_environment = pex_env.in_workspace()
+    if run_in_sandbox:
+        complete_pex_environment = pex_env.in_sandbox(working_directory="{chroot}")
+    else:
+        complete_pex_environment = pex_env.in_workspace()
+    
     venv_pex = await Get(VenvPex, VenvPexRequest(pex_request, complete_pex_environment))
     input_digests = [
         venv_pex.digest,
