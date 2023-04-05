@@ -1,12 +1,16 @@
 # Copyright 2023 Pants project contributors (see CONTRIBUTORS.md).
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+_CARGO_BIN = f"{env('HOME')}/.cargo/bin"
+_PYTHON_SEARCH_PATH = f"{env('HOME')}/.pyenv/shims"
+_RUST_MODE = [] if env("MODE") == "debug" else ["--release"]
+
 system_binary(
     name="rustup",
     binary_name="rustup",
     description="The `rustup` binary",
     extra_search_paths=[
-        "/Users/chrisjrn/.cargo/bin",
+        _CARGO_BIN,
     ],
     fingerprint_args=["-V"],
 )
@@ -16,7 +20,7 @@ system_binary(
     binary_name="cargo",
     description="The `cargo` binary",
     extra_search_paths=[
-        "/Users/chrisjrn/.cargo/bin",
+        _CARGO_BIN,
     ],
 )
 
@@ -28,20 +32,18 @@ system_binary(
 
 system_binary(
     name="python3",
-    binary_name="python3",
+    binary_name="python3.9",
     fingerprint_args=["--version"],
     extra_search_paths=[
-        "/Users/chrisjrn/.pyenv/shims",
+        _PYTHON_SEARCH_PATH,
     ],
 )
-
 
 system_binary(
     name="ar",
     binary_name="ar",
     fingerprint_args=["-qc", "foo.ar", "/dev/null"],  # _sigh_
 )
-
 
 files(
     name="rust_sources",
@@ -66,16 +68,13 @@ adhoc_tool(
     args=[
         "build",
         "--features=extension-module",
-        # "--release",
+    ]
+    + _RUST_MODE
+    + [
         "-p",
         "engine",
         "-p",
         "client",
-    ],
-    extra_env_vars=[
-        "PY=/Users/chrisjrn/.pyenv/shims/python3.9",
-        "PY03_PYTHON=/Users/chrisjrn/.pyenv/shims/python3.9",
-        "PYTHON_SYS_EXECUTABLE=/Users/chrisjrn/.pyenv/shims/python3.9",
     ],
     runnable_dependencies=[
         ":rustup",
@@ -100,18 +99,3 @@ adhoc_tool(
     ],
     log_output=True,
 )
-
-"""
-
-PY="$(determine_python)"
-export PY
-export PYO3_PYTHON="${PY}"
-export PYTHON_SYS_EXECUTABLE="${PY}" # Consumed by the cpython crate.
-
-"${REPO_ROOT}/cargo" build \
-    --features=extension-module \
-    ${MODE_FLAG} \
-    -p engine \
-    -p client 
-    
-"""
