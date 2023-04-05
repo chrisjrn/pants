@@ -22,3 +22,10 @@ remote_environment(
     name="buildgrid_remote",
     python_bootstrap_search_path=["<PATH>"],
 )
+
+files(
+    name="rust_toolchain",
+    sources=[
+        "rust-toolchain",
+    ],
+)

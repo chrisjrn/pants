@@ -62,6 +62,7 @@ pants_ignore.add = [
   "!*.class",
   # We also want to override the .gitignore'd pants.pex file
   "!/pants.pex",
+  "!/src/rust/engine/.cargo",
   # Ignore node modules for docs processing tools
   "/docs/node_modules",
 ]
