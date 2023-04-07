@@ -5,13 +5,21 @@ _DEBUG = env("MODE") == "debug"
 _RUST_MODE = [] if _DEBUG else ["--release"]
 _OUTPUT_DIR = "debug" if _DEBUG else "release"
 
+_RUSTUP_DIR = env("_RUSTY_PANTS_RUSTUP_DIR")
+_CARGO_DIR = env("_RUSTY_PANTS_CARGO_DIR")
+_PYTHON_DIR = env("_RUSTY_PANTS_PYTHON_DIR")
+_PYTHON_BINARY_NAME = env("_RUSTY_PANTS_PYTHON_BINARY")
+
+
+def search_path(s):
+    return [s] if s else []
+
+
 system_binary(
     name="rustup",
     binary_name="rustup",
     description="The `rustup` binary",
-    extra_search_paths=[
-        env('_RUSTY_PANTS_RUSTUP_DIR'),
-    ],
+    extra_search_paths=search_path(_RUSTUP_DIR),
     fingerprint_args=["-V"],
 )
 
@@ -19,9 +27,7 @@ system_binary(
     name="cargo",
     binary_name="cargo",
     description="The `cargo` binary",
-    extra_search_paths=[
-        env('_RUSTY_PANTS_CARGO_DIR'),
-    ],
+    extra_search_paths=search_path(_CARGO_DIR),
 )
 
 system_binary(
@@ -32,11 +38,9 @@ system_binary(
 
 system_binary(
     name="python3",
-    binary_name=env('_RUSTY_PANTS_PYTHON_BINARY'),
+    binary_name=_PYTHON_BINARY_NAME or "python",
     fingerprint_args=["--version"],
-    extra_search_paths=[
-        env('_RUSTY_PANTS_PYTHON_DIR'),
-    ],
+    extra_search_paths=search_path(_PYTHON_DIR),
 )
 
 system_binary(
