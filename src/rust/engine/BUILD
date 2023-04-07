@@ -1,16 +1,16 @@
 # Copyright 2023 Pants project contributors (see CONTRIBUTORS.md).
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-_CARGO_BIN = f"{env('HOME')}/.cargo/bin"
-_PYTHON_SEARCH_PATH = f"{env('HOME')}/.pyenv/shims"
-_RUST_MODE = [] if env("MODE") == "debug" else ["--release"]
+_DEBUG = env("MODE") == "debug"
+_RUST_MODE = [] if _DEBUG else ["--release"]
+_OUTPUT_DIR = "debug" if _DEBUG else "release"
 
 system_binary(
     name="rustup",
     binary_name="rustup",
     description="The `rustup` binary",
     extra_search_paths=[
-        _CARGO_BIN,
+        env('_RUSTY_PANTS_RUSTUP_DIR'),
     ],
     fingerprint_args=["-V"],
 )
@@ -20,7 +20,7 @@ system_binary(
     binary_name="cargo",
     description="The `cargo` binary",
     extra_search_paths=[
-        _CARGO_BIN,
+        env('_RUSTY_PANTS_CARGO_DIR'),
     ],
 )
 
@@ -32,10 +32,10 @@ system_binary(
 
 system_binary(
     name="python3",
-    binary_name="python3.9",
+    binary_name=env('_RUSTY_PANTS_PYTHON_BINARY'),
     fingerprint_args=["--version"],
     extra_search_paths=[
-        _PYTHON_SEARCH_PATH,
+        env('_RUSTY_PANTS_PYTHON_DIR'),
     ],
 )
 
@@ -83,7 +83,7 @@ adhoc_tool(
         ":python3",
     ],
     output_directories=[
-        "target",
+        f"target/{_OUTPUT_DIR}",
     ],
     log_output=True,
 )
