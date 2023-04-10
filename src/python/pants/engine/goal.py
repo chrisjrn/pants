@@ -83,49 +83,19 @@ class Goal:
     """
 
     class EnvironmentBehavior(Enum):
-        """Indicates that a goal's behavior with respect to environments has not been considered.
-
-        If set, will trigger a deprecation warning. If the desired behavior is to stay pinned to
-        defaults, changing to `LOCAL_ONLY` will silence the warning for this goal.
-        """
-
-        UNMIGRATED = 1
-
         """ Indicates that the goal will always operate on the local environment target.
 
-        This is largely the same behavior as Pants has had pre-2.15. Set to this value to silence
-        the deprecation warning that arises from using `UNMIGRATED`."""
+        This is largely the same behavior as Pants has had pre-2.15."""
         LOCAL_ONLY = 2
 
-        f""" Indicates that the goal chooses the environments to use to execute rules within the goal.
-
-        This requires migration work to be done by the goal author. See
-        {doc_url('plugin-upgrade-guide')}.
-        """
+        f""" Indicates that the goal chooses the environments to use to execute rules within the goal."""
         USES_ENVIRONMENTS = 3
 
     exit_code: int
     subsystem_cls: ClassVar[Type[GoalSubsystem]]
 
-    f"""Indicates that a Goal has been migrated to compute EnvironmentNames to build targets in.
-
-    All goals in `pantsbuild/pants` should be migrated before the 2.15.x branch is cut, but end
-    user goals have until `2.17.0.dev3` to migrate.
-
-    See {doc_url('plugin-upgrade-guide')}.
-    """
-    environment_behavior: ClassVar[EnvironmentBehavior] = EnvironmentBehavior.UNMIGRATED
-
-    @classmethod
-    def _selects_environments(cls) -> bool:
-        deprecated_conditional(
-            lambda: cls.environment_behavior == Goal.EnvironmentBehavior.UNMIGRATED,
-            "2.17.0.dev3",
-            f"Setting `Goal.environment_behavior=EnvironmentBehavior.UNMIGRATED` for `Goal` "
-            f"`{cls.name}`",
-            hint=f"See {doc_url('plugin-upgrade-guide')}\n",
-        )
-        return cls.environment_behavior == Goal.EnvironmentBehavior.USES_ENVIRONMENTS
+    f"""Indicates that a Goal has been migrated to compute EnvironmentNames to build targets in."""
+    environment_behavior: ClassVar[EnvironmentBehavior]
 
     @final
     @classproperty
